@@ -249,7 +249,7 @@ export const TestMachine = setup({
         SaveState: {
           invoke: {
             src: "saveFinal",
-            id: "save.final",
+            id: "saveFinal",
 
             onDone: {
               target: "Done",

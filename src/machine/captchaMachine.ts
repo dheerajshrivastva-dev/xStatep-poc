@@ -2,27 +2,25 @@ import { assign, setup } from "xstate";
 
 export const CaptchaMachine = setup({
   types: {
-    context: {} as { question: string; answer: number; isPassed: boolean, userAnswer: number },
-    events: {} as { type: "save", userAnswer: number } | { type: "next", userAnswer: number },
+    context: {} as { question: string; answer: number; userAnswer: number },
+    events: {} as { type: "saveAnswer", userAnswer: number } | { type: "next", userAnswer: number },
   },
   actions: {
     saveAnswer: assign({
-      isPassed: ({ context, event }) => context.answer === event.userAnswer,
       userAnswer: ({ event }) => event.userAnswer,
     })
   },
   guards: {
     userAnswerIsEqualToAnswer: function ({ context }) {
       // Add your guard condition here
-      return context.isPassed;
+      return context.answer === context.userAnswer;
     },
   },
 }).createMachine({
-  /** @xstate-layout N4IgpgJg5mDOIC5QGECGAHALgYwBaoDoBFAVzkwEsB7AOwGJZUA3MAbQAYBdRUdK2CpVo8QAD0QBGAGwBmAgE5FigOwAmdvIAc7AKyqpAGhABPRJokEd7a+1UT50mVJ0BfF0bRY8hAII1YAO5gAE50HNxIIHwCQjQi4ggALE4KSlrWOjqaUoYmiPLKBNpaBfqJ0jrlbh4YOPgEfoEhYRIRvPyC1HGRCclSqUraulk5RqYIEllFGpryiZpqmqo6yspu7iA0VBBwIp51qCLRncI9iAC0uePnOgOKOYqq+sqJqtUg+97EZLCxRx1-M5JVRjSTsRIENTOHISWbsZTwt4bT71AAKqFgsEg-xiXXiiGUOn66hkEjsOkmLyu+UKuhKemUlMJa2RtS+jSCwRxJ26oASpIhaXk7E0MlU2lWoIm4Mh+iJUlhwoRanWLiAA */
+  /** @xstate-layout N4IgpgJg5mDOIC5QGECGAHALgYwBaoDoBFAVzkwEsB7AOwGJZUA3MAbQAYBdRUdK2CpVo8QAD0QBGAGwBmAgE5FigOwAmdvIAc7AKyqpAGhABPRJokEd7a+1UT50mVJ0BfF0bRY8hAII1YAO5gAE50HNxIIHwCQjQi4ggALE4KSlrWOjqaUoYmiPLKBNpaBfqJ0jrlbh4YOPgEfoEhYRIRvPyC1HGRCclSqUraulk5RqYIEllFGpryiZpqmqo6yspu7iA0VBBwIp51qCLRncI9iAC0uePnOgOKfYlSqsvKMtUg+97EZLCxRx1-M5JVRjSTsRIENTOHISWbsZTw1TvT71AAKqFgsEg-xiXXiiGUOn66hkEjsOkmykeoIQBQIuhKemUlMJaw2KN8-iCwRxJ26oASpIhaXk7E0MlU2lWNIk4Mh+iJUlhooRanWLiAA */
   context: {
     question: "2 + 2 = ?",
     answer: 4,
-    isPassed: false,
     userAnswer: 0
   },
   id: "Captcha",
@@ -30,7 +28,7 @@ export const CaptchaMachine = setup({
   states: {
     Question: {
       on: {
-        save: {
+        saveAnswer: {
           target: "Answer",
           actions: "saveAnswer"
         }
