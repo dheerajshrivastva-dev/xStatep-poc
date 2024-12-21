@@ -3,6 +3,7 @@ import './SavedForms.css'; // Create this file for styles
 
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { AnyActor, SnapshotFrom } from 'xstate';
 
 
 export type SavedForm = {
@@ -10,7 +11,7 @@ export type SavedForm = {
   name: string; // Name of the form
   lastStep: number; // Last step completed
   updatedAt: string; // Timestamp of last update
-  snapShot: any;
+  snapShot: SnapshotFrom<AnyActor>;
 };
 
 type SavedFormsProps = {
@@ -20,7 +21,7 @@ type SavedFormsProps = {
 
 const SavedForms: React.FC<SavedFormsProps> = ({ savedForms, onStartNew }) => {
   const navigate = useNavigate();
-  const onResume = (id: string, snapShot: any) => navigate(`/create/${id}/${snapShot.context.step}`, { state: { snapShot } });
+  const onResume = (id: string, snapShot: SnapshotFrom<AnyActor>) => navigate(`/create/${id}/${snapShot.context.step}`, { state: { snapShot } });
 
   return (
     <div className="saved-forms-container">

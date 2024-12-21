@@ -1,5 +1,7 @@
-import { assign, createMachine, setup } from "xstate";
+import { assign,  setup } from "xstate";
 import { CaptchaMachine } from "./captchaMachine";
+import { generateCaptcha } from "../util";
+import { NavigateFunction } from "react-router-dom";
 
 export type goToStepParamsType = {
   step: number;
@@ -7,7 +9,7 @@ export type goToStepParamsType = {
 };
 
 type InputType = {
-  navigate?: null | ((...args: any[]) => void);
+  navigate?: null | NavigateFunction;
   data?: {
     step1data: string;
     step2data: string;
@@ -29,10 +31,10 @@ export const TestMachine = setup({
         step4data: string;
         step5data: string;
       };
-      navigate: null | ((...args: any[]) => void);
+      navigate: NavigateFunction | null;
       captchaSuccess: boolean;
     },
-    events: {} as { type: "next" } | { type: "back" } | { type: "submit" } | { type: "save" } | {type: "retry"},
+    events: {} as { type: "next", data?: string } | { type: "back", data?: string } | { type: "submit", data?: string } | { type: "save", data?: string } | {type: "retry", data?: string},
     input: {} as InputType,
   },
   actions: {
@@ -41,15 +43,20 @@ export const TestMachine = setup({
       context.navigate?.(params.path);
       context.step = params.step;
     },
-    saveData: function ({ context }, params: { data: string, key: string }) {
-      context.data = { ...context.data, [params.key]: params.data };
+    saveData: function ({ context, event }, params: { data: string, key: string }) {
+      context.data = { ...context.data, [params.key]: event?.data };
     },
   },
   actors: {
-    "saveFinal": createMachine(CaptchaMachine.config)
+    "saveFinal": CaptchaMachine
+  },
+  guards: {
+    isPassed: ({ context }) => {
+      return context.captchaSuccess
+    }
   }
 }).createMachine({
-  /** @xstate-layout N4IgpgJg5mDOIC5QFUB2AXAlugNpAdAMrpgAOAjAMSpgAe6A2gAwC6iopA9rNpp6uxC1EAVgAs5fOQBMIptIBsTMQGYxAdgAcAGhABPRAvWTNATiYjN6oxpGmFAXwe60WXAWJlJhAIYA3MGIfEkpYfzBmNiQQLh4sfkFhBHJTU3wrOXJ5JgUFFU01XQMEBUt8EVKmY0sU9WlyJxcMbDwIIhJSaWo6RlZBWN4E6KTycmt8HNkRcjEFUzrTIsN1MXwVc0trFfU7R2cQVxaPDq6AIx8AYwBrSP7uQYFh0QkpWXklVQ0dfVEd-FMVCt7JppPkxKZpI0Ds13G1PJ0iOEgiEwgFbtEBvFHqAkgVVpoZCIVBUVNJNGZpEsSgpJDk5Bp1nN6pD9odYe0yCpuvR0Rx7ljEoYaf9ASJZGJFG9Fj8EGIQfg5appGJVICViooWzWhzSFzztdeTF+XxsUJEKNxpMRNNZvNpNLiiItArAWIKhYJblTJqYdr4SpEQFkWBQuFDZiTYLknK0jsmFlyCCrNJQVS8ppyspSuQ5uDySIfW4-R0xNzelE+XFI08ENbJDI5Qp7dm5eoqfamOUtBYskwmOtiWJC0c4SXKPqbn0McahjjRNNXo3mzarFT8gpyipRiCm0xyTT1MP2fDVr4g+hgiHUREp5WHlGUmkrOCybltioFN9ivkM6DLJoKhVFYFCHVlfWOMgRHHS5JwrI0q1nM1axeBtNCbewVzbGUCQVVJUlUPJ5CyQ8wKLCDSBEQNAgvEIIH4MB8EwVA-E4K4GOvfAADMmJ8HBwxnU0RjySiMhkTQqhpFQLCpMR+3wWRTCsJtrGUdQqiPYtIKo4NKDAAAnPTOD0-BSBwYJOKMgBbfAOO41BeP4hDBPNPIN3EOZzCbcg5CbNcqgVIke1kupclApoyNHLSABF6NCABXU5LOwRz7xrFIlH+TQ3WI6R+3wtdxjGewcgpADlI08jKIAUQMozKD0sB0D0vQUoFNK1MogFrETeo1FJSkZVkDdTECpQtiyiEnH2VBOAgOBBC1SA7icqMAFplSpVbOrw8l1C3V9xILUiRx1chltSucEA2mUnVpEDUly3JphBCrIoobSaLAc62suuo0xw9RTBzDQcysCTXtOmzwggYNvurS6VDUeTgTwiwwesf7O3EHNpnUYCqk0CH4WkOHEKSUoMy6sVxElOQHV+ANAPsLQCVmPaiZOD7L1J5yEDU4bRXFWmmHpkosuRnMU0Uj8KhI8KTuJqGAhhz6eajew0lBFVZER5kc3+gNlElnYzGtT8Oc5NW0q3AMMhFyXcqyqk6wmZQnXqQGiVmC3dS5kgrcu8gPxMOMgabR2xDTYU9pkaQ6gJOowuhCKdQDa8Ve56cVrSptVjGFIRcUqxzBUKPOzlGQt123ONWO48SwDpDru-Pt8D2ux5GtZR8nEH3TyRVWs4upC-plCRJFmZVZKyr0qiO+X67IVZ09hoefqQxHVmbPGdnmSuv0QCRO2ZFVxGp8xTCTxa3pERuRht9JQ4dvdI5lHM0jdKS8aMQcg5ZBfNIUT9l9Ne8MkJB2FHbMOKYX5rikuUdyoMsh5EUnsABlV8AxRoHfc04kAyKSAvuJQUlS4ykBBuIwxVPwQjKnHH21Vap6RwckPBmVCFoWIf2PynY0J2j7PdQkV9wJtAAGI8RwPCZhuU9qP2mJ+JQiZ9wFUohKewONL4jQlFNBwQA */
+  /** @xstate-layout N4IgpgJg5mDOIC5QDED2AnAtgWQIYGMALASwDswA6AZQBcwAHARgGJyAPGgbQAYBdRUPVSxiNYqlICQbRAFYALIwqMATLO6NF8tdwDMAGhABPRADYA7EoAcATm6ybimyt0v5AX3eG0WPETKUtAxKVLgAbmC0uHTMsOFgPPxIIEIiYhJSMgiMNjYUVubq3JY58qa6prKGJgiVVhSyldxWzfbyluae3hg4BCTk1HT0KqxgHIlSqaLikslZjIzmphTcpmpqrua6W1bVZubyFLp2Dk4ubl0gPr3+A0HDzABGBADWE8lT6bOgWQpKqupNJodAZjHJChQbNt2ltjjYDrJLtc-P1AkMVNR4lEYnEIu9BMJphk5ogrLpDlYAYwydx5LpyfI9rVTEpVuoWi0FB0kT0UQFBgxdKNxnxJoSvpkzCzIdtZAtqfICs0mYqMYq6aZaQU1rJEV4rry+vz7kLnvg3qKPuKZpLsotlqt1rJNttdLswQhZOZ6nSDuZYbkETzfEa7kNdJiItiwLF4viUtbiT9EJpzHlCtxuCpHLYVPYVEzZC1lNpFtnNTYCipgzdUQL6PJhVxLQS0jaSZ65codEDtOpQTVs9wGt7VBYrNmVEsa3ywwxG2aLUlW0TvtI5NKARotCCmW7ls7VBrdLIp5U9d0Q7c0fPI5EaNEY7iEi2E22k+vsrl8hnigtHOUlQqmUDSVtodhWOo8hlDOoY3vQshPK88afO2yaeoo3aAju-ZMpSFDyLkuQTvIjRQTYsHXvWsh3tGzAQBIlBkGEqAvJQz7IGQuAADYoYma7zJq9RWIRdgspYgHujUdKsuoo6MKsjAVLolF1vcNGhFGD4xGA6DoBgFD0Nx0QAGY9BQHFcbxr6oR+glqJCjr+gUlhsnuxQEYe5LUt6jSMKpxpDDRAAijGxAAro8mCiHx74CSmziHIUtjwrYMmrCqp4UFOWyntwdh5rYAVzghFCheQEVRTFjDLm+q62j5hx2DkCzbI68JMioLjZaYpgyROhSKJBxXwTRACiekYMw6BgDQ6BGLF9UdowpiOBQfVsnKUJrBUnWNJCh5KeSFQXgaV5qUFtHaTGi0Sst6g0WJOUuQpQEelOw66mUkF5jYCl5nq+qkKgEBwFIyJwWKcW2gAtCojIejDDqZhoKPEdoBQjfWjBQ0t6Hw4WlgrJUqhqIGRZY-cIRYtduN3eh5gFh6pj4WmK1upSNinlslNDEoz4QNGdNoZ+9KHOWVgFKo5i0lsCM1Czn2KJUANTqRKn6hDVH3Cowt2WYRYyoU8oiUqUnghGZG0moOSS3SvMMBimn3o+evxQgMvLFCxsLKbMvm7UInZX95SSzk3Ma5etaBY7FnxILtNWtDHY2Kt2XHZWuj-tSjBMizEa0iteXc+rDv0LobsNboeg-uoXUVPCysqs462ln6jDOhUphlxGztC0neOfkpXYFHXLirQcK15zXFQFNX8JQSoVg93HEQJ67A-00PLKHIsOT5YR462NPGK+4zQ0Ts4p1axd86Vx2BMeieeT5SJ1dklCji0mXhx94nK5byyIzFUacSKVhlrkBSWYf6r0gP3ABIsshi2DizKWH12jkhAfUL0hEWhZzcLkbumtDTayCvfdCSka6jyzOPRuU8PTDwoEsPqw8WTOCXkQqOs5RpXQ3gg-W2QTzWAzPXCeTcn7VwaAoFmeU-pZnsGXEKjFyFDzTBiFmhR6QFTKPLRA2xlgWFTiJCsE4s6KIoBNfS6AVHzDUetUeWisw6PcsOKwE9HBeign1LGnFSA8XuDYxAeY1gjkpJUbYU5IK6IQLKAi2YOhuOrvlIhnggA */
   context: ({ input }) => ({
     step: 1,
     data: {
@@ -62,7 +69,7 @@ export const TestMachine = setup({
     captchaSuccess: input?.captcha || false,
     navigate: input?.navigate || null,
   }),
-  id: "Untitled",
+  id: "FormMachine",
   initial: "Step1",
   states: {
     Step1: {
@@ -249,25 +256,44 @@ export const TestMachine = setup({
         SaveState: {
           invoke: {
             src: "saveFinal",
+            input: () => {
+              const { question, answer } = generateCaptcha();
+              return {
+                question,
+                answer
+              }
+            },
             id: "saveFinal",
-
+            systemId: "saveFinal",
             onDone: {
               target: "Done",
+
               actions: assign({
-                captchaSuccess: ({ event }: {event: any}) => !!event.data,
-              }),
+                captchaSuccess: ({ event } ) => {
+                  return event.output.isPassed
+                },
+              })
             },
 
             onError: "Error"
+          },
+
+          always: {
+            target: "Done",
+            guard: "isPassed"
           }
         },
 
         Done: {
           on: {
-            submit: {
-              target: "#Untitled.FinalStep",
+            submit: [{
+              guard: "isPassed",
+              target: "#FormMachine.FinalStep",
+              reenter: true,
+            }, {
+              target: "Error",
               reenter: true
-            }
+            }]
           }
         },
 

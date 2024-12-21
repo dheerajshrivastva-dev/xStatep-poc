@@ -1,3 +1,4 @@
+import { AnyActor, SnapshotFrom } from "xstate";
 import { SavedForm } from "./forms/getCreateForms";
 
 
@@ -14,7 +15,7 @@ export const getSavedForm = (id: string): SavedForm | undefined => {
 };
 
 export const saveUpdateForm = (
-  id: string, snapShotJson: any, lastStep: number
+  id: string, snapShotJson: SnapshotFrom<AnyActor>, lastStep: number
 ): void => {
   const savedFormsFromLocalStorage = localStorage.getItem('savedForms');
   
@@ -43,3 +44,30 @@ export const saveUpdateForm = (
 export const clearSnapShot = () => {
   localStorage.removeItem("savedForms");
 };
+
+export function generateCaptcha() {
+  const operators = ['+', '-', '*']; // Supported operators
+  const randomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  const num1 = randomNumber(1, 20); // Generate the first number (1-20)
+  const num2 = randomNumber(1, 20); // Generate the second number (1-20)
+  const operator = operators[randomNumber(0, operators.length - 1)]; // Randomly pick an operator
+
+  const question: string = `${num1} ${operator} ${num2}`;
+  let answer: number = 0;
+
+  // Calculate the answer based on the operator
+  switch (operator) {
+    case '+':
+      answer = num1 + num2;
+      break;
+    case '-':
+      answer = num1 - num2;
+      break;
+    case '*':
+      answer = num1 * num2;
+      break;
+  }
+
+  return { question, answer };
+}

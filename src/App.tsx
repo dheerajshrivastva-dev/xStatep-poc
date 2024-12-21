@@ -1,7 +1,7 @@
 import './App.css'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import GetCreateForms from './forms/getCreateForms'
-import Form, { CaptchaForm } from './forms/form'
+import Form from './forms/form'
 
 function App() {
 
@@ -11,7 +11,6 @@ function App() {
         <Route path="/" element={<GetCreateForms />} />
         <Route path="create/:formId" element={<Form />} />
         <Route path="create/:formId/:step" element={<Form />} />
-        <Route path="create/:formId/captcha/verify" element={<CaptchaForm />} />
       </Routes>
     </BrowserRouter>
   )
